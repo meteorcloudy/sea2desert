@@ -67,7 +67,7 @@ class Face {
   // Oooh, it would be nice to lerp here!
   void update(Rectangle newR) {
     r = (Rectangle) newR.clone();
-    timer = SURVIVE_TIME;
+    timer = round(SURVIVE_TIME * radius / MAX_RADIUS);
     centerX = r.x + r.width / 2.0;
     centerY = r.y + r.height / 2.0;
     centerX = map(centerX, VIDEO_WIDTH, 0, 0, width/scl);
