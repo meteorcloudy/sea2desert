@@ -9,12 +9,12 @@ PImage sea;
 PImage desert;
 
 float D = 0.1;
-float gauss_0;
-float recover_speed = 255 / 20;
+float GAUSS_0;
+float RECOVER_SPEED = 255 / 20;
 
 // video size
 int VIDEO_WIDTH = 320;
-int VIDEO_HEIGHT = 180;
+int VIDEO_HEIGHT = 240;
 
 int scl = 1;
 float MAX_RADIUS = 100;
@@ -36,7 +36,7 @@ void setup() {
   desert = loadImage("desert.jpg");
   sea.resize(width / scl, height / scl);
   desert.resize(width / scl, height / scl);
-  gauss_0 = gauss(0);
+  GAUSS_0 = gauss(0);
   
   video = new Capture(this, VIDEO_WIDTH, VIDEO_HEIGHT);
   opencv = new OpenCV(this, VIDEO_WIDTH, VIDEO_HEIGHT);
@@ -53,7 +53,6 @@ float gauss(float x) {
 
 void adjustImageTransparent(PImage img) {
   img.loadPixels();
-  
   for (int x = 0; x < img.width; x++ ) {
     for (int y = 0; y < img.height; y++ ) {
       int loc = x + y*img.width;
@@ -62,7 +61,7 @@ void adjustImageTransparent(PImage img) {
       float g = green(img.pixels[loc]);
       float b = blue (img.pixels[loc]);
       float oldAlpha = alpha(img.pixels[loc]);
-      float finalAlpha = constrain(oldAlpha + recover_speed, 0, 255);
+      float finalAlpha = constrain(oldAlpha + RECOVER_SPEED, 0, 255);
       
       for (Face face : faceList) {
         float distance = dist(x, y, face.centerX, face.centerY);
@@ -74,7 +73,7 @@ void adjustImageTransparent(PImage img) {
           alpha = 255;
         } else {
           distance = map(distance, face.inner_radius, face.out_radius, 0, 3*D);
-          alpha = map(gauss(distance), gauss_0, 0, 0, 255);
+          alpha = map(gauss(distance), GAUSS_0, 0, 0, 255);
         }
         finalAlpha = min(alpha, finalAlpha);
       }
