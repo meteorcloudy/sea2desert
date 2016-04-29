@@ -5,6 +5,7 @@ import java.awt.*;
 Capture video;
 OpenCV opencv;
 
+Movie ocean;
 PImage sea;
 PImage desert;
 
@@ -31,10 +32,10 @@ Rectangle[] faces;
 int faceCount = 0;
 
 void setup() {
-  size(1600, 900);
-  sea = loadImage("sea.jpg");
-  desert = loadImage("desert.jpg");
-  sea.resize(width / scl, height / scl);
+  size(1280, 720);
+  ocean = new Movie(this, "ocean.mp4");
+  ocean.loop();
+  desert = loadImage("desert_1280_720.jpg");
   desert.resize(width / scl, height / scl);
   GAUSS_0 = gauss(0);
   
@@ -90,6 +91,7 @@ void draw() {
   opencv.loadImage(video);
   detectFaces();
   image(desert, 0, 0);
+  sea = ocean.get();
   adjustImageTransparent(sea);
   image(sea, 0, 0);
 }
@@ -194,4 +196,5 @@ void detectFaces() {
 
 void captureEvent(Capture c) {
   c.read();
+  ocean.read();
 }
