@@ -8,6 +8,8 @@
  */
 
 int SURVIVE_TIME = 25;
+int IN_UNIT = 1;
+int OUT_UNIT = 5;
 
 class Face {
   
@@ -72,8 +74,8 @@ class Face {
     centerY = r.y + r.height / 2.0;
     centerX = map(centerX, VIDEO_WIDTH, 0, 0, width/scl);
     centerY = map(centerY, 0, VIDEO_HEIGHT, 0, height/scl);
-    inner_radius = radius * 1 / scl;
-    out_radius = radius * 3 / scl;
+    inner_radius = radius * IN_UNIT / scl;
+    out_radius = radius * OUT_UNIT / scl;
     available = false;
   }
 
@@ -81,8 +83,8 @@ class Face {
   void countDown() {
     if (timer != 0) {
       radius = max(0, radius / timer * (timer-1));
-      inner_radius = radius * 1 / scl;
-      out_radius = radius * 3 / scl;
+      inner_radius = radius * IN_UNIT / scl;
+      out_radius = radius * OUT_UNIT / scl;
     }
     timer--;
   }

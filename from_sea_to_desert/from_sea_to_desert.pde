@@ -7,7 +7,7 @@ OpenCV opencv;
 
 Movie ocean;
 PImage sea;
-PImage desert;
+Movie desert;
 
 float D = 0.1;
 float GAUSS_0;
@@ -35,8 +35,8 @@ void setup() {
   size(1280, 720);
   ocean = new Movie(this, "ocean.mp4");
   ocean.loop();
-  desert = loadImage("desert_1280_720.jpg");
-  desert.resize(width / scl, height / scl);
+  desert = new Movie(this, "desert.mp4");
+  desert.loop();
   GAUSS_0 = gauss(0);
   
   video = new Capture(this, VIDEO_WIDTH, VIDEO_HEIGHT);
@@ -99,4 +99,5 @@ void draw() {
 void captureEvent(Capture c) {
   c.read();
   ocean.read();
+  desert.read();
 }
