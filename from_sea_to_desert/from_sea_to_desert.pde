@@ -1,9 +1,11 @@
-import gab.opencv.*;
 import processing.video.*;
+import kinect4WinSDK.Kinect;
+import kinect4WinSDK.SkeletonData;
+
+Kinect kinect;
 import java.awt.*;
 
 Capture video;
-OpenCV opencv;
 
 Movie ocean;
 PImage sea;
@@ -22,14 +24,7 @@ float MAX_RADIUS = 100;
 float GROW_SPEED = 2;
 float INIT_RADIUS = 5;
 
-// List of my Face objects (persistent)
-ArrayList<Face> faceList;
-
-// List of detected faces (every frame)
-Rectangle[] faces;
-
-// Number of faces detected over all time. Used to set IDs.
-int faceCount = 0;
+ArrayList<Person> personList;
 
 void setup() {
   size(1280, 720);
@@ -39,13 +34,7 @@ void setup() {
   desert.loop();
   GAUSS_0 = gauss(0);
   
-  video = new Capture(this, VIDEO_WIDTH, VIDEO_HEIGHT);
-  opencv = new OpenCV(this, VIDEO_WIDTH, VIDEO_HEIGHT);
-  opencv.loadCascade(OpenCV.CASCADE_FRONTALFACE);  
-  
-  faceList = new ArrayList<Face>();
-
-  video.start();
+  personList = new ArrayList<Person>();
 }
 
 float gauss(float x) {
@@ -64,16 +53,16 @@ void adjustImageTransparent(PImage img) {
       float oldAlpha = alpha(img.pixels[loc]);
       float finalAlpha = constrain(oldAlpha + RECOVER_SPEED, 0, 255);
       
-      for (Face face : faceList) {
-        float distance = dist(x, y, face.centerX, face.centerY);
+      for (Person person : personList) {
+        float distance = person.dist(x, y);
         float alpha;
         
-        if (distance < face.inner_radius) {
+        if (distance < person.inner_radius) {
           alpha = 0;
-        } else if (distance > face.out_radius) {
+        } else if (distance > person.out_radius) {
           alpha = 255;
         } else {
-          distance = map(distance, face.inner_radius, face.out_radius, 0, 3*D);
+          distance = map(distance, person.inner_radius, person.out_radius, 0, 3*D);
           alpha = map(gauss(distance), GAUSS_0, 0, 0, 255);
         }
         finalAlpha = min(alpha, finalAlpha);
@@ -88,16 +77,59 @@ void adjustImageTransparent(PImage img) {
 
 void draw() {
   scale(scl);
-  opencv.loadImage(video);
-  detectFaces();
   image(desert, 0, 0);
   sea = ocean.get();
   adjustImageTransparent(sea);
   image(sea, 0, 0);
+  
+  for (Person person : personList) {
+    person.grow();
+  }
 }
 
-void captureEvent(Capture c) {
-  c.read();
-  ocean.read();
-  desert.read();
+void movieEvent(Movie m) {
+  m.read();
+}
+
+
+void appearEvent(SkeletonData _s) 
+{
+  if (_s.trackingState == Kinect.NUI_SKELETON_NOT_TRACKED) 
+  {
+    return;
+  }
+  synchronized(personList) {
+    personList.add(new Person(_s));
+  }
+}
+
+void disappearEvent(SkeletonData _s)
+{
+  synchronized(personList) {
+    for (int i=personList.size ()-1; i>=0; i--) 
+    {
+      if (_s.dwTrackingID == personList.get(i).id) 
+      {
+        personList.remove(i);
+      }
+    }
+  }
+}
+
+void moveEvent(SkeletonData _b, SkeletonData _a) 
+{
+  if (_a.trackingState == Kinect.NUI_SKELETON_NOT_TRACKED) 
+  {
+    return;
+  }
+  synchronized(personList) {
+    for (int i=personList.size ()-1; i>=0; i--) 
+    {
+      if (_b.dwTrackingID == personList.get(i).id) 
+      {
+        personList.get(i).update(_a);
+        break;
+      }
+    }
+  }
 }
