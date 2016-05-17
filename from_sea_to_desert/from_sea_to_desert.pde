@@ -5,8 +5,6 @@ import kinect4WinSDK.SkeletonData;
 Kinect kinect;
 import java.awt.*;
 
-Capture video;
-
 Movie ocean;
 PImage sea;
 Movie desert;
@@ -33,7 +31,7 @@ void setup() {
   desert = new Movie(this, "desert.mp4");
   desert.loop();
   GAUSS_0 = gauss(0);
-  
+  kinect = new Kinect(this);
   personList = new ArrayList<Person>();
 }
 
@@ -43,33 +41,35 @@ float gauss(float x) {
 
 void adjustImageTransparent(PImage img) {
   img.loadPixels();
-  for (int x = 0; x < img.width; x++ ) {
-    for (int y = 0; y < img.height; y++ ) {
-      int loc = x + y*img.width;
-      
-      float r = red  (img.pixels[loc]);
-      float g = green(img.pixels[loc]);
-      float b = blue (img.pixels[loc]);
-      float oldAlpha = alpha(img.pixels[loc]);
-      float finalAlpha = constrain(oldAlpha + RECOVER_SPEED, 0, 255);
-      
-      for (Person person : personList) {
-        float distance = person.dist(x, y);
-        float alpha;
+  synchronized(personList) {
+    for (int x = 0; x < img.width; x++ ) {
+      for (int y = 0; y < img.height; y++ ) {
+        int loc = x + y*img.width;
         
-        if (distance < person.inner_radius) {
-          alpha = 0;
-        } else if (distance > person.out_radius) {
-          alpha = 255;
-        } else {
-          distance = map(distance, person.inner_radius, person.out_radius, 0, 3*D);
-          alpha = map(gauss(distance), GAUSS_0, 0, 0, 255);
+        float r = red  (img.pixels[loc]);
+        float g = green(img.pixels[loc]);
+        float b = blue (img.pixels[loc]);
+        float oldAlpha = alpha(img.pixels[loc]);
+        float finalAlpha = constrain(oldAlpha + RECOVER_SPEED, 0, 255);
+        
+        for (Person person : personList) {
+          float distance = person.dist(x, y);
+          float alpha;
+          
+          if (distance < person.inner_radius) {
+            alpha = 0;
+          } else if (distance > person.out_radius) {
+            alpha = 255;
+          } else {
+            distance = map(distance, person.inner_radius, person.out_radius, 0, 3*D);
+            alpha = map(gauss(distance), GAUSS_0, 0, 0, 255);
+          }
+          finalAlpha = min(alpha, finalAlpha);
         }
-        finalAlpha = min(alpha, finalAlpha);
+        
+        color c = color(r, g, b, finalAlpha);
+        img.pixels[loc] = c;
       }
-      
-      color c = color(r, g, b, finalAlpha);
-      img.pixels[loc] = c;
     }
   }
   img.updatePixels();
@@ -91,7 +91,6 @@ void movieEvent(Movie m) {
   m.read();
 }
 
-
 void appearEvent(SkeletonData _s) 
 {
   if (_s.trackingState == Kinect.NUI_SKELETON_NOT_TRACKED) 
@@ -106,7 +105,7 @@ void appearEvent(SkeletonData _s)
 void disappearEvent(SkeletonData _s)
 {
   synchronized(personList) {
-    for (int i=personList.size ()-1; i>=0; i--) 
+    for (int i=personList.size()-1; i>=0; i--) 
     {
       if (_s.dwTrackingID == personList.get(i).id) 
       {
@@ -123,7 +122,7 @@ void moveEvent(SkeletonData _b, SkeletonData _a)
     return;
   }
   synchronized(personList) {
-    for (int i=personList.size ()-1; i>=0; i--) 
+    for (int i=personList.size()-1; i>=0; i--) 
     {
       if (_b.dwTrackingID == personList.get(i).id) 
       {
