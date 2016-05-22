@@ -13,16 +13,13 @@ float D = 0.1;
 float GAUSS_0;
 float RECOVER_SPEED = 255 / 20;
 
-// video size
-int VIDEO_WIDTH = 320;
-int VIDEO_HEIGHT = 240;
-
 int scl = 1;
 float MAX_RADIUS = 100;
 float GROW_SPEED = 2;
 float INIT_RADIUS = 5;
 
 ArrayList<Person> personList;
+float [][] alpha;
 
 void setup() {
   size(1280, 720);
@@ -31,6 +28,10 @@ void setup() {
   desert = new Movie(this, "desert.mp4");
   desert.loop();
   GAUSS_0 = gauss(0);
+  alpha = new float[width][height];
+  for (int x = 0; x < width; x++)
+    for (int y = 0; y < height; y++)
+      alpha[x][y] = 255;
   kinect = new Kinect(this);
   personList = new ArrayList<Person>();
 }
@@ -49,11 +50,11 @@ void adjustImageTransparent(PImage img) {
         float r = red  (img.pixels[loc]);
         float g = green(img.pixels[loc]);
         float b = blue (img.pixels[loc]);
-        float oldAlpha = alpha(img.pixels[loc]);
+        float oldAlpha = alpha[x][y];
         float finalAlpha = constrain(oldAlpha + RECOVER_SPEED, 0, 255);
         
         for (Person person : personList) {
-          float distance = person.dist(x, y);
+          float distance = dist(person.px, person.py, x, y);
           float alpha;
           
           if (distance < person.inner_radius) {
@@ -67,6 +68,7 @@ void adjustImageTransparent(PImage img) {
           finalAlpha = min(alpha, finalAlpha);
         }
         
+        alpha[x][y] = finalAlpha;
         color c = color(r, g, b, finalAlpha);
         img.pixels[loc] = c;
       }
@@ -81,9 +83,10 @@ void draw() {
   sea = ocean.get();
   adjustImageTransparent(sea);
   image(sea, 0, 0);
-  
-  for (Person person : personList) {
-    person.grow();
+  synchronized(personList) {
+    for (int i=personList.size()-1; i>=0; i--) {
+      personList.get(i).grow();
+    }
   }
 }
 
